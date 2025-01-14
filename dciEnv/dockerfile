@@ -1,0 +1,68 @@
+# Base image
+FROM ubuntu:20.04
+
+# Update and install required tools
+RUN apt-get update && apt-get install -y \
+    openjdk-${JAVA_VERSION}-jdk \
+    curl \
+    wget \
+    net-tools \
+    supervisor \
+    && apt-get clean
+
+# Set Java home
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# Download and install Zookeeper
+RUN curl -O  https://dlcdn.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz \
+    && tar -xzf apache-zookeeper-3.8.4-bin.tar.gz -C /opt \
+    && mv /opt/apache-zookeeper-3.8.4-bin /opt/zookeeper \
+    && rm apache-zookeeper-3.8.4-bin.tar.gz
+
+# Download and install Kafka
+RUN curl -O  https://dlcdn.apache.org/kafka/3.8.1/kafka_2.13-3.8.1.tgz \
+    && tar -xzf kafka_2.13-3.8.1.tgz -C /opt \
+    && mv /opt/kafka_2.13-3.8.1 /opt/kafka \
+    && rm kafka_2.13-3.8.1.tgz
+
+# Create directories for Zookeeper and Kafka configurations and logs
+RUN mkdir -p /data/zookeeper /data/kafka /opt/zookeeper/config /opt/kafka/config /logs
+
+# Download and install MongoDB
+RUN curl -O https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-8.0.4.tgz \
+    && tar -xzf mongodb-linux-x86_64-ubuntu2004-8.0.4.tgz -C /opt \
+    && mv /opt/mongodb-linux-x86_64-ubuntu2004-8.0.4 /opt/mongo \
+    && rm mongodb-linux-x86_64-ubuntu2004-8.0.4.tgz
+
+# Download and install MySql
+RUN wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-server-core-dbgsym_8.0.40-1ubuntu20.04_amd64.deb \
+    && dpkg -i mysql-server_8.0.40-1ubuntu20.04_amd64.deb --instdir=/opt/mysql #\
+#    && rm mysql-server_8.0.40-1ubuntu20.04_amd64.deb
+
+# Download and install Redis
+RUN apt-get install lsb-release gpg \
+    && curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg \
+    && chmod 644 /usr/share/keyrings/redis-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list \
+    && sudo apt-get update \
+    && sudo apt-get install redis \
+    && systemctl enable redis-server
+    && apt-get clean
+
+# Copy the entrypoint script and ensure it is executable
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Set environment variable for MySQL root password
+ENV MYSQL_ROOT_PASSWORD=alcatel
+
+# Copy configuration files
+COPY config /etc/service-config
+
+# Expose necessary ports
+EXPOSE 27017-27019 2181-2183 9092 6379 3306
+
+# Set the entrypoint script
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+

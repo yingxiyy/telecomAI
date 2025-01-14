@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  custom-services:
+    build: .
+    ports:
+      - "27017-27019:27017-27019"
+      - "2181-2183:2181-2183"
+      - "9092:9092"
+      - "6379:6379"
+      - "3306:3306"
+    volumes:
+      - ./data:/data
+    container_name: dciEnv
+

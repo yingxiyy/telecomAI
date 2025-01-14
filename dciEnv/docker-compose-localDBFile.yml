@@ -1,0 +1,44 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-service
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: mysecurepassword
+    volumes:
+      - ./mysql-data:/var/lib/mysql  # Map MySQL data to local folder
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongo-service
+    ports:
+      - "27017-27019:27017-27019"
+    volumes:
+      - ./mongo-data:/data/db  # Map MongoDB data to local folder
+
+  zookeeper:
+    image: zookeeper:3.8
+    container_name: zookeeper-service
+    ports:
+      - "2181-2183:2181-2183"
+    volumes:
+      - ./zookeeper-data:/data  # Zookeeper data persistence
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.1
+    container_name: kafka-service
+    ports:
+      - "9092:9092"
+    volumes:
+      - ./kafka-data:/var/lib/kafka  # Kafka data persistence
+
+  redis:
+    image: redis:7
+    container_name: redis-service
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data  # Redis data persistence
+
