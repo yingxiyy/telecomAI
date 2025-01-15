@@ -2,25 +2,25 @@
 set -e
 
 # Start MongoDB cluster
-mongod --config /etc/service-config/mongo/mongod1.conf &
-mongod --config /etc/service-config/mongo/mongod2.conf &
-mongod --config /etc/service-config/mongo/mongod3.conf &
+/opt/mongo/bin/mongod --config /opt/dciConfig/mongo/mongod1.conf &
+/opt/mongo/bin/mongod --config /opt/dciConfig/mongo/mongod2.conf &
+/opt/mongo/bin/mongod --config /opt/dciConfig/mongo/mongod3.conf &
 
 # Start ZooKeeper cluster
-zookeeper-server-start /etc/service-config/zookeeper/zoo1.cfg &
-zookeeper-server-start /etc/service-config/zookeeper/zoo2.cfg &
-zookeeper-server-start /etc/service-config/zookeeper/zoo3.cfg &
+/opt/zookeeper/bin/zkServer.sh --config /opt/dciConfig/zookeeper/1 &
+/opt/zookeeper/bin/zkServer.sh --config /opt/dciConfig/zookeeper/2 &
+/opt/zookeeper/bin/zkServer.sh --config /opt/dciConfig/zookeeper/3 &
 
 # Start Kafka cluster
-kafka-server-start /etc/service-config/kafka/server1.properties &
-kafka-server-start /etc/service-config/kafka/server2.properties &
-kafka-server-start /etc/service-config/kafka/server3.properties &
+/opt/kafka/bin/kafka-server-start.sh /opt/dciConfig/kafka/server1.properties &
+/opt/kafka/bin/kafka-server-start.sh /opt/dciConfig/kafka/server2.properties &
+/opt/kafka/bin/kafka-server-start.sh /opt/dciConfig/kafka/server3.properties &
 
 # Start Redis
-redis-server &
+#redis-server &
 
 # Start MySQL without running in the background
-service mysql start
+#service mysql start
 
 # Check if MySQL has already been initialized
 if [ ! -f /var/lib/mysql/.mysql_initialized ]; then
