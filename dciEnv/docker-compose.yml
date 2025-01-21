@@ -1,14 +1,13 @@
-version: "3.8"
+version: "3.9"
 services:
-  custom-services:
-    build: .
+  my_service:
+    build:
+      context: .  #current folder
+      dockerfile: Dockerfile
+    image: dcienv:1.0 
     ports:
-      - "27017-27019:27017-27019"
-      - "2181-2183:2181-2183"
-      - "9092:9092"
-      - "6379:6379"
-      - "3306:3306"
-    volumes:
-      - ./data:/data
-    container_name: dciEnv
-
+      - "27017-27019:27017-27019" # Maps mongo ports
+      - "2181-2183:2181-2183" # Maps Zookeeper ports
+      - "9092-9094:9092-9094" # Maps kafka ports
+      - "3306:3306" # Maps mysql ports
+      - "6379:6379" # Maps redis ports

@@ -7,8 +7,13 @@ LABEL version="1.0"
 LABEL description="docker for telecomAI database env"
 
 
+# Copy custom entrypoint and config files
+COPY config /opt/dciConfig
+COPY entrypoint.sh /opt/dciConfig
+
 # Install required tools and dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
     openjdk-11-jdk \
     systemd \
     curl \
@@ -18,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gzip \
     gnupg \
     openssl \
+    net-tools \
     libssl-dev \
     supervisor \
     lsb-release gpg \
@@ -31,10 +37,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #    && cd .. && rm -rf redis-${REDIS_VERSION} redis-${REDIS_VERSION}.tar.gz
 
 # Install MongoDB
-RUN curl -O https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-8.0.4.tgz \
-    && tar -xzf mongodb-linux-x86_64-ubuntu2004-8.0.4.tgz -C /opt \
-    && mv /opt/mongodb-linux-x86_64-ubuntu2004-8.0.4 /opt/mongo \
-    && rm mongodb-linux-x86_64-ubuntu2004-8.0.4.tgz \
+RUN curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor \
+    && echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-8.0.list \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y mongodb-org=8.0.4 mongodb-org-database=8.0.4 mongodb-org-server=8.0.4 mongodb-mongosh mongodb-org-mongos=8.0.4 mongodb-org-tools=8.0.4 \
 # Download and install Zookeeper
     && curl -O  https://dlcdn.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz \
     && tar -xzf apache-zookeeper-3.8.4-bin.tar.gz -C /opt \
@@ -46,15 +52,21 @@ RUN curl -O https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-8.0
     && mv /opt/kafka_2.13-3.8.1 /opt/kafka \
     && rm kafka_2.13-3.8.1.tgz \
 # Create directories for configurations and logs
-    && mkdir -p /data/zookeeper1/ /data/zookeeper2/ /data/zookeeper3/ /data/kafka /data/mongo /data/mysql /data/redis /logs /opt/dciConfig \
+    && mkdir -p /data/mongodb1 /data/mongodb2 /data/mongodb3 /data/zookeeper1/ /data/zookeeper2/ /data/zookeeper3/ /data/kafka /data/mysql /data/redis /logs /opt/dciConfig \
     && echo 1 > /data/zookeeper1/myid \
     && echo 2 > /data/zookeeper2/myid \
-    && echo 3 > /data/zookeeper3/myid 
+    && echo 3 > /data/zookeeper3/myid \
+    && chmod +x /opt/dciConfig/entrypoint.sh \
+#    && cp /opt/dciConfig/kafka/*.service /etc/systemd/system/multi-user.target.wants \
+#    && cp /opt/dciConfig/mongo/*.service /etc/systemd/system/multi-user.target.wants \
+#    && cp /opt/dciConfig/zookeeper/*.service /etc/systemd/system/multi-user.target.wants \
+#FROM redis/redis-stack:7.2.0-v14 will automatically running its entrypoint and runing front    
+    && cp /opt/dciConfig/entrypoint.sh /start.sh \
+    && cat entrypoint.sh >> /start.sh
 
-# Copy custom entrypoint and config files
-COPY config /opt/dciConfig
-COPY entrypoint.sh /opt/dciConfig
-RUN chmod +x /opt/dciConfig/entrypoint.sh  #FROM redis/redis-stack:7.2.0-v14 will automatically running its entrypoint and runing front
+ENV MYSQL_ROOT_PASSWORD=alcatel
+
+EXPOSE 27017 27018 27019 2181 2182 2183 9092 9093 9094 3306 6379 
 
 # Use the custom entrypoint
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["/start.sh"]
